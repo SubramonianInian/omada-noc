@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Omada NOC</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --transition: 0.25s ease;
+    --gap: 2px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #050507;
+    --surface: #0c0c0f;
+    --surface2: #111116;
+    --surface3: #18181e;
+    --border: #1e1e25;
+    --border-subtle: #151519;
+    --accent: #3b82f6;
+    --accent-soft: rgba(59,130,246,0.08);
+    --accent-text: #60a5fa;
+    --accent-glow: rgba(59,130,246,0.15);
+    --green: #10b981;
+    --green-soft: rgba(16,185,129,0.08);
+    --green-glow: rgba(16,185,129,0.15);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.08);
+    --amber: #f59e0b;
+    --amber-soft: rgba(245,158,11,0.08);
+    --cyan: #06b6d4;
+    --cyan-soft: rgba(6,182,212,0.08);
+    --purple: #a855f7;
+    --text: #e4e4e7;
+    --text-secondary: #8b8b96;
+    --text-muted: #45454d;
+    --shadow: 0 2px 8px rgba(0,0,0,0.5);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+    --topo-node-fill: #111116;
+    --chart-grid: rgba(255,255,255,0.03);
+    --chart-axis: #3a3a42;
+    --glow-accent: 0 0 20px rgba(59,130,246,0.08);
+    --glow-green: 0 0 20px rgba(16,185,129,0.08);
+  }
+
+  [data-theme="light"] {
+    --bg: #f4f4f5;
+    --surface: #ffffff;
+    --surface2: #f8f8fa;
+    --surface3: #ededf0;
+    --border: #e0e0e5;
+    --border-subtle: #f0f0f3;
+    --accent: #2563eb;
+    --accent-soft: rgba(37,99,235,0.06);
+    --accent-text: #2563eb;
+    --accent-glow: rgba(37,99,235,0.08);
+    --green: #059669;
+    --green-soft: rgba(5,150,105,0.06);
+    --green-glow: rgba(5,150,105,0.08);
+    --red: #dc2626;
+    --red-soft: rgba(220,38,38,0.06);
+    --amber: #d97706;
+    --amber-soft: rgba(217,119,6,0.06);
+    --cyan: #0891b2;
+    --cyan-soft: rgba(8,145,178,0.06);
+    --purple: #9333ea;
+    --text: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #a1a1aa;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    --topo-node-fill: #ffffff;
+    --chart-grid: rgba(0,0,0,0.04);
+    --chart-axis: #a1a1aa;
+    --glow-accent: 0 0 20px rgba(37,99,235,0.05);
+    --glow-green: 0 0 20px rgba(5,150,105,0.05);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    height: 100vh;
+    overflow: hidden;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  /* ============ LOGIN ============ */
+  #login-screen {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; background: var(--bg);
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px; width: 420px;
+    box-shadow: var(--shadow-lg);
+  }
+  .login-header { margin-bottom: 36px; text-align: center; }
+  .login-logo {
+    width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 14px; display: flex; align-items: center;
+    justify-content: center; font-size: 20px; font-weight: 700; color: #fff;
+    margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+  }
+  .login-title {
+    font-size: 24px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .login-sub { color: var(--text-muted); font-size: 13px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.3px;
+  }
+  .form-group input {
+    width: 100%; padding: 11px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-family: var(--font-mono);
+    font-size: 13px; outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .form-group input::placeholder { color: var(--text-muted); }
+  .login-btn {
+    width: 100%; padding: 12px; margin-top: 12px;
+    background: linear-gradient(135deg, var(--accent), #6366f1); border: none;
+    border-radius: var(--radius-sm); color: #fff; font-family: var(--font-sans);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: opacity var(--transition), transform 0.15s ease;
+    box-shadow: 0 2px 12px rgba(59,130,246,0.3);
+  }
+  .login-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+  .login-btn:active { transform: translateY(0); }
+  .login-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .login-error {
+    margin-top: 12px; padding: 10px 14px;
+    background: var(--red-soft); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius-sm); color: var(--red); font-size: 13px;
+    display: none;
+  }
+  #login-screen.hidden { display: none; }
+
+  /* ============ NOC LAYOUT ============ */
+  #noc { display: none; height: 100vh; flex-direction: column; }
+  #noc.active { display: flex; }
+
+  /* ============ HEADER ============ */
+  #noc-header {
+    height: 52px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 20px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 10;
+  }
+  .noc-logo { display: flex; align-items: center; gap: 12px; }
+  .noc-logo-mark {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 13px; font-weight: 700; color: #fff;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+  }
+  .noc-logo-text {
+    font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: var(--text);
+  }
+  .noc-logo-version {
+    font-size: 10px; font-weight: 500; color: var(--text-muted);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 4px; margin-left: -4px;
+  }
+  .noc-clock {
+    font-family: var(--font-mono); font-size: 22px;
+    font-weight: 500; letter-spacing: 2px; color: var(--text);
+    position: absolute; left: 50%; transform: translateX(-50%);
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .noc-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+  }
+  .status-pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); position: relative;
+  }
+  .status-pulse::after {
+    content: ''; position: absolute; inset: -3px;
+    border-radius: 50%; background: var(--green); opacity: 0.3;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0; transform: scale(1.5); } }
+
+  .header-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-muted);
+    transition: all var(--transition);
+  }
+  .header-btn:hover { background: var(--surface3); color: var(--text-secondary); border-color: var(--text-muted); }
+  .header-btn svg { width: 15px; height: 15px; }
+
+  .refresh-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+  }
+  .refresh-ring { width: 20px; height: 20px; }
+  .refresh-ring svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+  .refresh-ring circle { fill: none; stroke-width: 2; cx: 10; cy: 10; r: 8; }
+  .refresh-ring .track { stroke: var(--border); }
+  .refresh-ring .fill { stroke: var(--accent); transition: stroke-dashoffset 1s linear; }
+
+  /* ============ STATS BAR ============ */
+  #noc-stats-bar {
+    display: grid; grid-template-columns: repeat(6, 1fr);
+    gap: var(--gap); background: var(--bg);
+    flex-shrink: 0;
+  }
+  .noc-stat {
+    background: var(--surface); padding: 14px 20px;
+    display: flex; align-items: center; gap: 14px;
+    transition: background var(--transition);
+  }
+  .noc-stat-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .noc-stat-icon svg { width: 18px; height: 18px; }
+  .noc-stat-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .noc-stat-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-muted); font-weight: 600;
+  }
+  .noc-stat-value {
+    font-size: 22px; font-weight: 700; line-height: 1.1;
+    color: var(--text); letter-spacing: -0.5px; font-family: var(--font-mono);
+  }
+  .noc-stat-sub {
+    font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);
+  }
+
+  /* ============ MAIN GRID ============ */
+  #noc-grid {
+    display: grid;
+    grid-template-columns: 190px 1fr 320px;
+    grid-template-rows: 2fr 1fr;
+    grid-template-areas:
+      "devices  topology  clients"
+      "devices  traffic   rotating";
+    gap: var(--gap);
+    background: var(--bg);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .noc-panel {
+    background: var(--surface); overflow: hidden; position: relative;
+  }
+  .panel-header {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); font-weight: 600;
+    padding: 14px 16px 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-header-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+  }
+
+  #noc-topology { grid-area: topology; }
+  #noc-clients  { grid-area: clients; }
+  #noc-devices  { grid-area: devices; }
+  #noc-rotating { grid-area: rotating; }
+  #noc-traffic  { grid-area: traffic; }
+
+  /* ============ TOPOLOGY ============ */
+  #noc-topology { display: flex; flex-direction: column; }
+  #topology-svg { flex: 1; width: 100%; min-height: 0; }
+
+  /* Topology clickable nodes */
+  #topology-svg .topo-click-zone { cursor: pointer; opacity: 0; }
+  #topology-svg .topo-click-zone:hover { opacity: 0.08; }
+
+  /* Topology animations */
+  @keyframes topo-node-in {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes topo-pulse {
+    0%, 100% { opacity: 0.15; r: 22; }
+    50% { opacity: 0.06; r: 28; }
+  }
+  @keyframes topo-wan-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  #topology-svg .topo-node-group {
+    animation: topo-node-in 0.5s ease backwards;
+  }
+  #topology-svg .topo-pulse-ring {
+    animation: topo-pulse 3s ease-in-out infinite;
+  }
+  #topology-svg .topo-wan-orbit {
+    transform-origin: var(--cx) var(--cy);
+    animation: topo-wan-spin 12s linear infinite;
+  }
+  #topology-svg .topo-particle {
+    opacity: 0.7;
+  }
+
+  /* ============ DEVICE STATUS ============ */
+  #noc-devices { display: flex; flex-direction: column; }
+  #device-tiles {
+    flex: 1; display: flex; flex-direction: column;
+    gap: 3px; padding: 4px 6px 6px; overflow-y: auto;
+  }
+  .device-tile {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    transition: all var(--transition); cursor: pointer;
+  }
+  .device-tile:hover { border-color: var(--accent); box-shadow: var(--glow-accent); }
+  .device-tile.offline { border-color: rgba(239,68,68,0.3); }
+  .device-tile.offline:hover { box-shadow: 0 0 20px rgba(239,68,68,0.08); }
+  .device-tile-header { display: flex; align-items: center; gap: 8px; }
+  .device-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .device-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .device-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .device-name {
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .device-meta {
+    font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ============ TRAFFIC CHART ============ */
+  #noc-traffic { display: flex; flex-direction: column; }
+  .traffic-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px 0;
+  }
+  .traffic-header .panel-header { padding: 0; }
+  .traffic-legend {
+    display: flex; gap: 16px; align-items: center;
+    font-family: var(--font-mono); font-size: 10px;
+  }
+  .traffic-legend-item {
+    display: flex; align-items: center; gap: 6px; color: var(--text-secondary);
+  }
+  .traffic-legend-dot { width: 8px; height: 3px; border-radius: 2px; }
+  .traffic-current {
+    font-weight: 600; font-family: var(--font-mono); font-size: 11px;
+  }
+  #traffic-canvas {
+    flex: 1; width: 100%; min-height: 0; display: block;
+  }
+
+  /* ============ CLIENT BREAKDOWN ============ */
+  #noc-clients { display: flex; flex-direction: column; }
+  .client-search { margin: 0 12px 8px; }
+  .client-search input {
+    width: 100%; padding: 7px 10px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text); font-family: var(--font-mono); font-size: 11px;
+    outline: none; transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .client-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .client-search input::placeholder { color: var(--text-muted); }
+  #client-breakdown { flex: 1; padding: 4px 12px 12px; overflow-y: auto; }
+
+  .breakdown-summary {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding-bottom: 10px;
+  }
+  .summary-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 10px; text-align: center;
+  }
+  .summary-card .label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-muted); font-weight: 600; margin-bottom: 2px;
+  }
+  .summary-card .value {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.5px;
+    font-family: var(--font-mono);
+  }
+
+  .vlan-section { margin-bottom: 6px; }
+  .vlan-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); margin-bottom: 4px;
+  }
+  .vlan-name { font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
+  .vlan-count { font-family: var(--font-mono); font-size: 10px; font-weight: 500; color: var(--accent-text); }
+  .vlan-bar-track {
+    height: 2px; background: var(--surface2); border-radius: 2px;
+    margin: 4px 10px 6px; overflow: hidden;
+  }
+  .vlan-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+  .client-mini-list { display: flex; flex-wrap: wrap; gap: 3px; padding: 0 10px; }
+  .client-chip {
+    font-family: var(--font-mono); font-size: 9px;
+    padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--text-secondary); white-space: nowrap;
+    max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+    transition: all var(--transition);
+  }
+  .client-chip:hover { border-color: var(--accent); }
+  .client-chip.wifi { border-left: 2px solid var(--accent); }
+  .client-chip.wired { border-left: 2px solid var(--text-muted); }
+
+  /* ============ ROTATING PANEL ============ */
+  #noc-rotating { display: flex; flex-direction: column; }
+  .rotating-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px 0;
+  }
+  .rotating-header .panel-header { padding: 0; }
+  .rotating-counter {
+    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 4px;
+  }
+  #rotation-progress {
+    height: 2px; background: var(--accent); opacity: 0.4;
+    margin: 8px 16px 0; border-radius: 1px;
+  }
+  #rotating-content {
+    flex: 1; padding: 8px 16px 12px; overflow: hidden; position: relative;
+  }
+  .rotating-view { animation: fade-in 0.3s ease forwards; }
+
+  .rot-table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 10px;
+  }
+  .rot-table th {
+    text-align: left; color: var(--text-muted); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 6px 6px; border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  .rot-table th.sortable { cursor: pointer; user-select: none; }
+  .rot-table th.sortable:hover { color: var(--accent-text); }
+  .sort-arrow { font-size: 7px; margin-left: 2px; }
+  .rot-table td {
+    padding: 5px 6px; border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;
+    color: var(--text-secondary);
+  }
+  .rot-table tr:last-child td { border-bottom: none; }
+
+  .event-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 6px 0; border-bottom: 1px solid var(--border-subtle);
+  }
+  .event-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .event-time { color: var(--text-muted); font-size: 10px; font-family: var(--font-mono); white-space: nowrap; }
+  .event-msg { font-size: 11px; color: var(--text-secondary); }
+
+  .net-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .net-stat-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+  }
+  .net-stat-item .label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted); font-weight: 600; margin-bottom: 4px;
+  }
+  .net-stat-item .value {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ============ DEVICE DETAIL OVERLAY ============ */
+  #device-detail-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6); display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  }
+  #device-detail-overlay.active { display: flex; }
+  .detail-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; width: 440px;
+    max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+    animation: modal-in 0.2s ease;
+  }
+  @keyframes modal-in { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .detail-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+  }
+  .detail-card-title { font-size: 16px; font-weight: 700; }
+  .detail-close {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-muted); font-size: 16px; padding: 4px 10px;
+    line-height: 1; transition: all var(--transition);
+  }
+  .detail-close:hover { color: var(--text); border-color: var(--text-muted); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .detail-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px;
+  }
+  .detail-item .label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-muted); font-weight: 600; margin-bottom: 4px;
+  }
+  .detail-item .value {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+    color: var(--text); word-break: break-all;
+  }
+  .detail-item.full { grid-column: 1 / -1; }
+
+  /* ============ TICKER ============ */
+  #noc-ticker {
+    height: 30px; background: var(--surface);
+    border-top: 1px solid var(--border); overflow: hidden;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .ticker-label {
+    background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; padding: 0 14px; height: 100%;
+    display: flex; align-items: center; flex-shrink: 0;
+  }
+  .ticker-track { flex: 1; overflow: hidden; position: relative; height: 100%; }
+  #ticker-content {
+    display: flex; align-items: center; gap: 40px; height: 100%;
+    white-space: nowrap; animation: ticker-scroll 60s linear infinite;
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--text-muted); position: absolute;
+  }
+  .ticker-event { display: flex; align-items: center; gap: 8px; }
+
+  /* ============ BADGES ============ */
+  .badge {
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    font-size: 9px; font-weight: 600; font-family: var(--font-mono);
+    letter-spacing: 0.3px;
+  }
+  .badge-green { background: var(--green-soft); color: var(--green); }
+  .badge-red { background: var(--red-soft); color: var(--red); }
+  .badge-amber { background: var(--amber-soft); color: var(--amber); }
+  .badge-accent { background: var(--accent-soft); color: var(--accent-text); }
+
+  .no-data {
+    color: var(--text-muted); font-size: 11px;
+    text-align: center; padding: 24px; font-family: var(--font-mono);
+  }
+
+  /* ============ ANIMATIONS ============ */
+  @keyframes fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+
+  /* ============ SCROLLBAR ============ */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">O</div>
+      <div class="login-title">Omada NOC</div>
+      <div class="login-sub">Connect to your Omada controller</div>
+    </div>
+    <div class="form-group">
+      <label>Controller Host</label>
+      <input type="text" id="host" placeholder="192.168.0.1 or 192.168.0.1:8043" value="192.168.0.4"/>
+    </div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="admin"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Connect</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- NOC DISPLAY -->
+<div id="noc">
+  <header id="noc-header">
+    <div class="noc-logo">
+      <div class="noc-logo-mark">O</div>
+      <span class="noc-logo-text">Omada NOC</span>
+      <span class="noc-logo-version">v1.0</span>
+    </div>
+    <div class="noc-clock" id="noc-clock">00:00:00</div>
+    <div class="header-right">
+      <div class="noc-meta">
+        <div class="status-pulse"></div>
+        <span id="noc-host">--</span>
+        <span style="color:var(--border)">|</span>
+        <span>UP <span id="noc-uptime">0:00:00</span></span>
+      </div>
+      <div class="refresh-indicator" id="refresh-indicator">
+        <div class="refresh-ring">
+          <svg viewBox="0 0 20 20"><circle class="track"/><circle class="fill" id="refresh-ring-fill"/></svg>
+        </div>
+        <span id="refresh-countdown">30s</span>
+      </div>
+      <button class="header-btn" id="fullscreen-btn" title="Toggle fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+      <button class="header-btn" id="theme-toggle" title="Toggle theme">
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="noc-stats-bar">
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--accent-soft); color:var(--accent-text);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Clients</div>
+        <div class="noc-stat-value" id="stat-clients">--</div>
+        <div class="noc-stat-sub" id="stat-clients-sub">--</div>
+      </div>
+    </div>
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--green-soft); color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Access Points</div>
+        <div class="noc-stat-value" id="stat-aps">--</div>
+        <div class="noc-stat-sub" id="stat-aps-sub">--</div>
+      </div>
+    </div>
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--cyan-soft); color:var(--cyan);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="6" rx="1"/><rect x="1" y="14" width="22" height="6" rx="1"/><line x1="6" y1="7" x2="6.01" y2="7"/><line x1="6" y1="17" x2="6.01" y2="17"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Switches</div>
+        <div class="noc-stat-value" id="stat-switches">--</div>
+        <div class="noc-stat-sub" id="stat-switches-sub">--</div>
+      </div>
+    </div>
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--amber-soft); color:var(--amber);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Gateways</div>
+        <div class="noc-stat-value" id="stat-gw">--</div>
+        <div class="noc-stat-sub" id="stat-gw-sub">--</div>
+      </div>
+    </div>
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--accent-soft); color:var(--accent-text);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Download</div>
+        <div class="noc-stat-value" id="stat-dl" style="color:var(--accent-text);">--</div>
+        <div class="noc-stat-sub" id="stat-dl-sub">current</div>
+      </div>
+    </div>
+    <div class="noc-stat">
+      <div class="noc-stat-icon" style="background:var(--green-soft); color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="noc-stat-info">
+        <div class="noc-stat-label">Upload</div>
+        <div class="noc-stat-value" id="stat-ul" style="color:var(--green);">--</div>
+        <div class="noc-stat-sub" id="stat-ul-sub">current</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="noc-grid">
+    <div id="noc-devices" class="noc-panel">
+      <div class="panel-header"><div class="panel-header-dot" style="background:var(--green)"></div> Devices</div>
+      <div id="device-tiles"></div>
+    </div>
+
+    <div id="noc-topology" class="noc-panel">
+      <div class="panel-header"><div class="panel-header-dot" style="background:var(--accent)"></div> Network Topology</div>
+      <svg id="topology-svg" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div id="noc-traffic" class="noc-panel">
+      <div class="traffic-header">
+        <div class="panel-header" style="padding:0"><div class="panel-header-dot" style="background:var(--accent)"></div> Traffic</div>
+        <div class="traffic-legend">
+          <div class="traffic-legend-item">
+            <div class="traffic-legend-dot" style="background:var(--accent)"></div>
+            <span>DL <span class="traffic-current" id="traffic-dl-current" style="color:var(--accent-text)">--</span></span>
+          </div>
+          <div class="traffic-legend-item">
+            <div class="traffic-legend-dot" style="background:var(--green)"></div>
+            <span>UL <span class="traffic-current" id="traffic-ul-current" style="color:var(--green)">--</span></span>
+          </div>
+        </div>
+      </div>
+      <canvas id="traffic-canvas"></canvas>
+    </div>
+
+    <div id="noc-clients" class="noc-panel">
+      <div class="panel-header"><div class="panel-header-dot" style="background:var(--cyan)"></div> Client Breakdown</div>
+      <div class="client-search">
+        <input type="text" id="client-search-input" placeholder="Search clients..." oninput="filterClients()"/>
+      </div>
+      <div id="client-breakdown"></div>
+    </div>
+
+    <div id="noc-rotating" class="noc-panel">
+      <div class="rotating-header">
+        <div class="panel-header" id="rotating-label" style="padding:0"><div class="panel-header-dot" style="background:var(--purple)"></div> Clients</div>
+        <div class="rotating-counter" id="rotating-counter">1/5</div>
+      </div>
+      <div id="rotation-progress"></div>
+      <div id="rotating-content"></div>
+    </div>
+  </div>
+
+  <div id="device-detail-overlay" onclick="if(event.target===this)closeDetail()">
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title" id="detail-title">Device</div>
+        <button class="detail-close" onclick="closeDetail()">&times;</button>
+      </div>
+      <div class="detail-grid" id="detail-content"></div>
+    </div>
+  </div>
+
+  <div id="noc-ticker">
+    <div class="ticker-label">Events</div>
+    <div class="ticker-track">
+      <div id="ticker-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let loginTime = null;
+let allClients = [];
+let allDevices = [];
+let allEvents = [];
+let rotationIndex = 0;
+let rotationTimer = null;
+const ROTATION_INTERVAL = 15000;
+const ROTATION_VIEWS = ['clients', 'aps', 'events', 'traffic', 'stats'];
+
+const VLAN_COLORS_DARK = ['#60a5fa','#38bdf8','#818cf8','#a78bfa','#34d399','#22d3ee','#f472b6','#fb923c'];
+const VLAN_COLORS_LIGHT = ['#2563eb','#0284c7','#4f46e5','#7c3aed','#059669','#0891b2','#db2777','#ea580c'];
+
+function getVlanColors() {
+  return document.documentElement.dataset.theme === 'light' ? VLAN_COLORS_LIGHT : VLAN_COLORS_DARK;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatBytes(b) {
+  if (!b || b <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.max(0, Math.min(4, Math.floor(Math.log(b) / Math.log(1024))));
+  return (b / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+}
+
+function formatUptime(sec) {
+  if (!sec) return '--';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm ' + s + 's';
+  return m + 'm ' + s + 's';
+}
+
+function isDeviceOnline(d) {
+  if (d.statusCategory !== undefined) return d.statusCategory !== 2;
+  if (d.status === 0 || d.status === 14 || d.status === 'connected') return true;
+  return false;
+}
+
+function showError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ============ THEME ============
+function initTheme() {
+  const saved = localStorage.getItem('omada-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme;
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('omada-theme', next);
+  updateThemeIcon();
+  if (allDevices.length) {
+    const gateways = allDevices.filter(d => d.type === 'gateway');
+    const switches = allDevices.filter(d => d.type === 'switch');
+    const aps = allDevices.filter(d => d.type === 'ap');
+    renderTopology(gateways, switches, aps);
+  }
+  if (trafficData.timestamps.length > 0) renderTrafficChart();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.getElementById('theme-icon-sun').style.display = isDark ? 'block' : 'none';
+  document.getElementById('theme-icon-moon').style.display = isDark ? 'none' : 'block';
+}
+
+document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+initTheme();
+
+// ============ LOGIN ============
+async function doLogin() {
+  const host = document.getElementById('host').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+  try {
+    const resp = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, username, password }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Login failed');
+    loginTime = Date.now();
+    document.getElementById('noc-host').textContent = host;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('noc').classList.add('active');
+    startClock();
+    await loadDashboard();
+    setInterval(loadDashboard, 30000);
+    startRotation();
+    startRefreshCountdown();
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+  }
+}
+
+// ============ CLOCK ============
+function startClock() {
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('noc-clock').textContent =
+    now.toLocaleTimeString('en-US', { hour12: false });
+  if (loginTime) {
+    const elapsed = Math.floor((Date.now() - loginTime) / 1000);
+    const h = Math.floor(elapsed / 3600);
+    const m = Math.floor((elapsed % 3600) / 60);
+    const s = elapsed % 60;
+    document.getElementById('noc-uptime').textContent =
+      `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+}
+
+// ============ DATA LOADING ============
+async function loadDashboard() {
+  try {
+    const resp = await fetch(`${API}/dashboard`);
+    const data = await resp.json();
+
+    const clients = data.clients?.data || [];
+    const aps = data.aps?.data || [];
+    const switches = data.switches?.data || [];
+    const gateways = data.gateways?.data || [];
+    const devices = data.devices || [];
+    const events = data.events?.data || [];
+
+    allClients = clients;
+    allDevices = devices;
+    allEvents = events;
+
+    renderStats(clients, aps, switches, gateways);
+    renderDeviceTiles(devices);
+    renderTopology(gateways, switches, aps);
+    renderClientBreakdown(clients);
+    renderTicker(events);
+    renderCurrentRotation();
+    loadTrafficHistory();
+  } catch (e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+// ============ TRAFFIC CHART ============
+let trafficData = { timestamps: [], download: [], upload: [] };
+
+async function loadTrafficHistory() {
+  try {
+    const resp = await fetch(`${API}/traffic-history`);
+    trafficData = await resp.json();
+    renderTrafficChart();
+    updateTrafficStats();
+  } catch (e) {
+    console.error('Traffic history error:', e);
+  }
+}
+
+function updateTrafficStats() {
+  const { download, upload } = trafficData;
+  const len = download.length;
+  const dlCurrent = len > 0 ? download[len - 1] : 0;
+  const ulCurrent = len > 0 ? upload[len - 1] : 0;
+  document.getElementById('stat-dl').textContent = formatBytes(dlCurrent) + '/s';
+  document.getElementById('stat-ul').textContent = formatBytes(ulCurrent) + '/s';
+  document.getElementById('traffic-dl-current').textContent = formatBytes(dlCurrent) + '/s';
+  document.getElementById('traffic-ul-current').textContent = formatBytes(ulCurrent) + '/s';
+}
+
+function renderTrafficChart() {
+  const canvas = document.getElementById('traffic-canvas');
+  const container = canvas.parentElement;
+  const rect = container.getBoundingClientRect();
+  const headerH = container.querySelector('.traffic-header').getBoundingClientRect().height;
+  const dpr = window.devicePixelRatio || 1;
+  const W = rect.width;
+  const H = rect.height - headerH - 4;
+  if (W < 10 || H < 10) return;
+
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const { timestamps, download, upload } = trafficData;
+  const len = timestamps.length;
+
+  updateTrafficStats();
+
+  if (len < 2) {
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting traffic data...', W / 2, H / 2);
+    return;
+  }
+
+  const padL = 52, padR = 10, padT = 10, padB = 22;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const allVals = [...download, ...upload];
+  const maxVal = Math.max(...allVals, 1);
+
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
+  const axisTextColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-axis').trim();
+
+  // Y-axis gridlines
+  const gridSteps = 4;
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= gridSteps; i++) {
+    const y = padT + (chartH / gridSteps) * i;
+    const val = maxVal * (1 - i / gridSteps);
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(W - padR, y);
+    ctx.stroke();
+    ctx.fillStyle = axisTextColor;
+    ctx.fillText(formatBytes(val), padL - 6, y + 3);
+  }
+
+  // X-axis time labels
+  ctx.textAlign = 'center';
+  const timeSteps = Math.min(5, len);
+  for (let i = 0; i < timeSteps; i++) {
+    const idx = Math.floor((i / (timeSteps - 1)) * (len - 1));
+    const x = padL + (idx / (len - 1)) * chartW;
+    const t = new Date(timestamps[idx]);
+    const label = t.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    ctx.fillStyle = axisTextColor;
+    ctx.fillText(label, x, H - 4);
+  }
+
+  function drawArea(data, strokeColor, fillColor) {
+    // Fill
+    ctx.beginPath();
+    ctx.moveTo(padL, padT + chartH);
+    for (let i = 0; i < len; i++) {
+      const x = padL + (i / (len - 1)) * chartW;
+      const y = padT + chartH - (data[i] / maxVal) * chartH;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(padL + chartW, padT + chartH);
+    ctx.closePath();
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+    grad.addColorStop(0, fillColor);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Stroke
+    ctx.beginPath();
+    for (let i = 0; i < len; i++) {
+      const x = padL + (i / (len - 1)) * chartW;
+      const y = padT + chartH - (data[i] / maxVal) * chartH;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Glow dot on latest point
+    if (len > 0) {
+      const lastX = padL + chartW;
+      const lastY = padT + chartH - (data[len - 1] / maxVal) * chartH;
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = strokeColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+    }
+  }
+
+  const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  const greenColor = getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
+  const accentFill = isDark ? 'rgba(59,130,246,0.15)' : 'rgba(37,99,235,0.1)';
+  const greenFill = isDark ? 'rgba(16,185,129,0.12)' : 'rgba(5,150,105,0.08)';
+
+  drawArea(upload, greenColor, greenFill);
+  drawArea(download, accentColor, accentFill);
+}
+
+window.addEventListener('resize', () => {
+  if (trafficData.timestamps.length > 0) renderTrafficChart();
+});
+
+// ============ STATS ============
+function renderStats(clients, aps, switches, gateways) {
+  const wifi = clients.filter(c => c.wireless).length;
+  const wired = clients.filter(c => !c.wireless).length;
+  const apsOnline = aps.filter(a => isDeviceOnline(a)).length;
+
+  document.getElementById('stat-clients').textContent = clients.length;
+  document.getElementById('stat-clients-sub').textContent = `${wifi} wifi / ${wired} wired`;
+  document.getElementById('stat-aps').textContent = aps.length;
+  document.getElementById('stat-aps-sub').textContent = `${apsOnline} online`;
+  document.getElementById('stat-switches').textContent = switches.length;
+  document.getElementById('stat-switches-sub').textContent = `${switches.length} device(s)`;
+  document.getElementById('stat-gw').textContent = gateways.length;
+  document.getElementById('stat-gw-sub').textContent = gateways.length > 0 ? 'Online' : 'None';
+}
+
+// ============ CLIENT BREAKDOWN ============
+function renderClientBreakdown(clients) {
+  const el = document.getElementById('client-breakdown');
+  if (!clients.length) {
+    el.innerHTML = '<div class="no-data">No clients connected</div>';
+    return;
+  }
+
+  let filtered = clients;
+  if (clientSearchTerm) {
+    filtered = clients.filter(c => {
+      const name = (c.name || '').toLowerCase();
+      const mac = (c.mac || '').toLowerCase();
+      const ip = (c.ip || '').toLowerCase();
+      return name.includes(clientSearchTerm) || mac.includes(clientSearchTerm) || ip.includes(clientSearchTerm);
+    });
+  }
+
+  const wifi = filtered.filter(c => c.wireless);
+  const wired = filtered.filter(c => !c.wireless);
+  const colors = getVlanColors();
+
+  const vlanMap = {};
+  filtered.forEach(c => {
+    const vid = c.vid || c.vlan || 0;
+    if (!vlanMap[vid]) vlanMap[vid] = [];
+    vlanMap[vid].push(c);
+  });
+  const vlans = Object.entries(vlanMap).sort((a, b) => b[1].length - a[1].length);
+
+  let totalDl = 0, totalUl = 0;
+  filtered.forEach(c => { totalDl += (c.download || 0); totalUl += (c.upload || 0); });
+
+  let html = '<div class="breakdown-summary">';
+  html += `<div class="summary-card"><div class="label">WiFi</div><div class="value" style="color:var(--accent-text)">${wifi.length}</div></div>`;
+  html += `<div class="summary-card"><div class="label">Wired</div><div class="value" style="color:var(--text)">${wired.length}</div></div>`;
+  html += `<div class="summary-card"><div class="label">Total DL</div><div class="value" style="color:var(--accent-text);font-size:11px">${formatBytes(totalDl)}</div></div>`;
+  html += `<div class="summary-card"><div class="label">Total UL</div><div class="value" style="color:var(--text-secondary);font-size:11px">${formatBytes(totalUl)}</div></div>`;
+  html += '</div>';
+
+  vlans.forEach(([vid, vlanClients], idx) => {
+    const color = colors[idx % colors.length];
+    const pct = Math.round((vlanClients.length / clients.length) * 100);
+    html += '<div class="vlan-section">';
+    html += `<div class="vlan-header"><span class="vlan-name" style="color:${color}">VLAN ${vid || 'Default'}</span><span class="vlan-count">${vlanClients.length} (${pct}%)</span></div>`;
+    html += `<div class="vlan-bar-track"><div class="vlan-bar-fill" style="width:${pct}%;background:${color};opacity:0.6;"></div></div>`;
+    html += '<div class="client-mini-list">';
+    vlanClients.slice(0, 6).forEach(c => {
+      const name = escapeHtml(c.name || c.mac || '--');
+      const cls = c.wireless ? 'wifi' : 'wired';
+      html += `<div class="client-chip ${cls}">${name}</div>`;
+    });
+    if (vlanClients.length > 6) {
+      html += `<div class="client-chip" style="color:var(--accent-text)">+${vlanClients.length - 6}</div>`;
+    }
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+// ============ DEVICE TILES ============
+function renderDeviceTiles(devices) {
+  const el = document.getElementById('device-tiles');
+  if (!devices.length) {
+    el.innerHTML = '<div class="no-data">No devices</div>';
+    return;
+  }
+  el.innerHTML = devices.map(d => {
+    const online = isDeviceOnline(d);
+    const name = escapeHtml(d.name || d.mac || 'Unknown');
+    const clients = d.clientNum || d.numClient || 0;
+    const devId = escapeHtml(d.mac || d.id || '');
+    return `
+      <div class="device-tile ${online ? '' : 'offline'}" onclick="showDeviceDetail('${devId}')">
+        <div class="device-tile-header">
+          <div class="device-dot ${online ? 'online' : 'offline'}"></div>
+          <div class="device-name">${name}</div>
+        </div>
+        <div class="device-meta">${escapeHtml(d.model || d.type || '--')} | ${escapeHtml(d.ip || '--')}</div>
+        <div class="device-meta">${online ? 'Up ' + escapeHtml(d.uptime || formatUptime(d.uptimeLong)) : 'OFFLINE'} | ${clients} clients</div>
+      </div>`;
+  }).join('');
+}
+
+// ============ TOPOLOGY ============
+function renderTopology(gateways, switches, aps) {
+  const svg = document.getElementById('topology-svg');
+  const rect = svg.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height - 32;
+  if (W < 10 || H < 10) return;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const lineColor = isDark ? '#222228' : '#d4d4d8';
+  const nodeStroke = isDark ? '#3b82f6' : '#2563eb';
+  const nodeFill = isDark ? '#111116' : '#ffffff';
+  const dotFill = isDark ? '#1a2744' : '#dbeafe';
+  const labelColor = isDark ? '#52525b' : '#71717a';
+  const nameColor = isDark ? '#e4e4e7' : '#18181b';
+  const subColor = isDark ? '#3a3a42' : '#a1a1aa';
+
+  const f = 'font-family="Inter, sans-serif"';
+  let html = '';
+  const midY = H * 0.45;
+  let nodeIdx = 0; // for staggered animation delays
+  let linkId = 0;  // unique ID for each link's particle animation
+
+  // SVG defs for particle gradients
+  html += `<defs>
+    <radialGradient id="particleGlow">
+      <stop offset="0%" stop-color="${nodeStroke}" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="${nodeStroke}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>`;
+
+  function link(x1, y1, x2, y2, label) {
+    const id = 'link-' + (linkId++);
+    let s = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${lineColor}" stroke-width="1.5"/>`;
+    // Animated data flow particles
+    s += `<circle class="topo-particle" r="2.5" fill="${nodeStroke}">
+      <animateMotion dur="${2 + Math.random()}s" repeatCount="indefinite" begin="${Math.random() * 2}s">
+        <mpath href="#${id}-path"/>
+      </animateMotion>
+    </circle>`;
+    s += `<circle class="topo-particle" r="4" fill="url(#particleGlow)">
+      <animateMotion dur="${2 + Math.random()}s" repeatCount="indefinite" begin="${Math.random() * 2}s">
+        <mpath href="#${id}-path"/>
+      </animateMotion>
+    </circle>`;
+    s += `<path id="${id}-path" d="M${x1},${y1} L${x2},${y2}" fill="none" stroke="none"/>`;
+    // Reverse particle
+    s += `<circle class="topo-particle" r="2" fill="${isDark ? '#10b981' : '#059669'}" opacity="0.5">
+      <animateMotion dur="${2.5 + Math.random()}s" repeatCount="indefinite" begin="${Math.random() * 2}s" keyPoints="1;0" keyTimes="0;1" calcMode="linear">
+        <mpath href="#${id}-path"/>
+      </animateMotion>
+    </circle>`;
+    s += `<circle cx="${x1}" cy="${y1}" r="3" fill="${dotFill}" stroke="${nodeStroke}" stroke-width="1"/>`;
+    s += `<circle cx="${x2}" cy="${y2}" r="3" fill="${dotFill}" stroke="${nodeStroke}" stroke-width="1"/>`;
+    if (label) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      s += `<text x="${mx}" y="${my - 6}" text-anchor="middle" fill="${subColor}" font-size="7" ${f}>${label}</text>`;
+    }
+    return s;
+  }
+
+  function curvedLink(x1, y1, x2, y2) {
+    const id = 'link-' + (linkId++);
+    const cpX = x1 + (x2 - x1) * 0.15;
+    const cpY = y2;
+    const pathD = `M${x1},${y1} C${cpX},${y1} ${cpX},${cpY} ${x2},${y2}`;
+    let s = `<path d="${pathD}" fill="none" stroke="${lineColor}" stroke-width="1.5"/>`;
+    s += `<path id="${id}-path" d="${pathD}" fill="none" stroke="none"/>`;
+    // Animated particle along curve
+    s += `<circle class="topo-particle" r="2.5" fill="${nodeStroke}">
+      <animateMotion dur="${2.5 + Math.random()}s" repeatCount="indefinite" begin="${Math.random() * 2}s">
+        <mpath href="#${id}-path"/>
+      </animateMotion>
+    </circle>`;
+    s += `<circle class="topo-particle" r="4" fill="url(#particleGlow)">
+      <animateMotion dur="${2.5 + Math.random()}s" repeatCount="indefinite" begin="${Math.random() * 2}s">
+        <mpath href="#${id}-path"/>
+      </animateMotion>
+    </circle>`;
+    s += `<circle cx="${x1}" cy="${y1}" r="3" fill="${dotFill}" stroke="${nodeStroke}" stroke-width="1"/>`;
+    s += `<circle cx="${x2}" cy="${y2}" r="3" fill="${dotFill}" stroke="${nodeStroke}" stroke-width="1"/>`;
+    return s;
+  }
+
+  function deviceNode(x, y, opts) {
+    const { name, model, icon, color, badge, uptime, ip, deviceId } = opts;
+    const delay = (nodeIdx++ * 0.08).toFixed(2);
+    let s = `<g class="topo-node-group" style="animation-delay:${delay}s; transform-origin:${x}px ${y}px">`;
+
+    // Pulse ring for online devices
+    if (color === nodeStroke) {
+      s += `<circle class="topo-pulse-ring" cx="${x}" cy="${y}" r="22" fill="${color}" opacity="0.1"/>`;
+    }
+
+    s += icon(x, y, color);
+    const safeName = escapeHtml(name);
+    const truncName = safeName.length > 16 ? safeName.slice(0, 14) + '..' : safeName;
+    s += `<text x="${x}" y="${y + 32}" text-anchor="middle" fill="${nameColor}" font-size="9" ${f} font-weight="600">${truncName}</text>`;
+    if (model) {
+      const safeModel = escapeHtml(model);
+      const tw = Math.min(safeModel.length * 5 + 10, 80);
+      const truncModel = safeModel.length > 14 ? safeModel.slice(0, 12) + '..' : safeModel;
+      s += `<rect x="${x - tw/2}" y="${y + 36}" width="${tw}" height="14" rx="3" fill="none" stroke="${lineColor}" stroke-width="1"/>`;
+      s += `<text x="${x}" y="${y + 46}" text-anchor="middle" fill="${labelColor}" font-size="7" ${f}>${truncModel}</text>`;
+    }
+    if (ip) s += `<text x="${x}" y="${y + 58}" text-anchor="middle" fill="${labelColor}" font-size="7" ${f}>${escapeHtml(ip)}</text>`;
+    if (uptime) s += `<text x="${x}" y="${y + 68}" text-anchor="middle" fill="${subColor}" font-size="7" ${f}>Up ${uptime}</text>`;
+    if (badge > 0) {
+      s += `<circle cx="${x + 18}" cy="${y - 16}" r="9" fill="${dotFill}" stroke="${nodeStroke}" stroke-width="1"/>`;
+      s += `<text x="${x + 18}" y="${y - 12}" text-anchor="middle" fill="${nodeStroke}" font-size="8" font-weight="bold" ${f}>${badge}</text>`;
+    }
+    if (deviceId) {
+      s += `<rect class="topo-click-zone" x="${x - 30}" y="${y - 24}" width="60" height="80" rx="4" fill="${nodeStroke}" onclick="showDeviceDetail('${escapeHtml(deviceId)}')"/>`;
+    }
+    s += '</g>';
+    return s;
+  }
+
+  function wanIcon(x, y, color) {
+    // Outer glow pulse
+    let s = `<circle class="topo-pulse-ring" cx="${x}" cy="${y}" r="24" fill="${color}" opacity="0.06"/>`;
+    // Static globe
+    s += `<circle cx="${x}" cy="${y}" r="18" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.5"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="18" fill="${color}" opacity="0.04"/>`;
+    s += `<line x1="${x-18}" y1="${y}" x2="${x+18}" y2="${y}" stroke="${color}" stroke-width="1" opacity="0.3"/>`;
+    s += `<line x1="${x-14}" y1="${y-8}" x2="${x+14}" y2="${y-8}" stroke="${color}" stroke-width="0.5" opacity="0.2"/>`;
+    s += `<line x1="${x-14}" y1="${y+8}" x2="${x+14}" y2="${y+8}" stroke="${color}" stroke-width="0.5" opacity="0.2"/>`;
+    // Rotating meridian (orbit effect)
+    s += `<g class="topo-wan-orbit" style="--cx:${x}px;--cy:${y}px">`;
+    s += `<ellipse cx="${x}" cy="${y}" rx="8" ry="18" fill="none" stroke="${color}" stroke-width="1" opacity="0.3"/>`;
+    s += `</g>`;
+    // Second meridian rotating opposite
+    s += `<g class="topo-wan-orbit" style="--cx:${x}px;--cy:${y}px;animation-direction:reverse;animation-duration:18s">`;
+    s += `<ellipse cx="${x}" cy="${y}" rx="14" ry="18" fill="none" stroke="${color}" stroke-width="0.7" opacity="0.15"/>`;
+    s += `</g>`;
+    return s;
+  }
+
+  function gwIcon(x, y, color) {
+    const w = 44, h = 20;
+    let s = `<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="3" fill="${nodeFill}" stroke="${color}" stroke-width="1.5"/>`;
+    s += `<line x1="${x-10}" y1="${y-h/2}" x2="${x-10}" y2="${y-h/2-7}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`;
+    s += `<line x1="${x+10}" y1="${y-h/2}" x2="${x+10}" y2="${y-h/2-7}" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>`;
+    for (let p = 0; p < 4; p++) {
+      s += `<rect x="${x - 14 + p*8}" y="${y + 1}" width="5" height="5" rx="1" fill="${color}" opacity="0.35"/>`;
+    }
+    return s;
+  }
+
+  function swIcon(x, y, color) {
+    const w = 50, h = 20;
+    let s = `<rect x="${x-w/2}" y="${y-h/2}" width="${w}" height="${h}" rx="3" fill="${nodeFill}" stroke="${color}" stroke-width="1.5"/>`;
+    for (let p = 0; p < 5; p++) {
+      s += `<rect x="${x - 20 + p*9}" y="${y - 5}" width="5" height="4" rx="1" fill="${color}" opacity="0.45"/>`;
+      s += `<rect x="${x - 20 + p*9}" y="${y + 2}" width="5" height="4" rx="1" fill="${color}" opacity="0.25"/>`;
+    }
+    return s;
+  }
+
+  function wifiArc(cx, cy, r) {
+    const startAngle = -Math.PI * 0.75;
+    const endAngle = -Math.PI * 0.25;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`;
+  }
+
+  function apIcon(x, y, color) {
+    let s = `<circle cx="${x}" cy="${y+4}" r="12" fill="${nodeFill}" stroke="${color}" stroke-width="1.5"/>`;
+    s += `<path d="${wifiArc(x, y - 2, 16)}" stroke="${color}" fill="none" stroke-width="1.5" stroke-linecap="round"/>`;
+    s += `<path d="${wifiArc(x, y - 2, 10)}" stroke="${color}" fill="none" stroke-width="1.5" stroke-linecap="round"/>`;
+    s += `<circle cx="${x}" cy="${y - 2}" r="2" fill="${color}"/>`;
+    return s;
+  }
+
+  function clientGroupIcon(x, y, color) {
+    let s = `<rect x="${x-14}" y="${y-8}" width="28" height="20" rx="3" fill="${nodeFill}" stroke="${color}" stroke-width="1" opacity="0.6"/>`;
+    s += `<rect x="${x-11}" y="${y-11}" width="22" height="16" rx="3" fill="${nodeFill}" stroke="${color}" stroke-width="1" opacity="0.4"/>`;
+    s += `<rect x="${x-8}" y="${y-4}" width="16" height="10" rx="1" fill="${color}" opacity="0.1"/>`;
+    return s;
+  }
+
+  const hasAPs = aps.length > 0;
+  const hasWifiClients = aps.some(a => (a.clientNum || a.numClient || 0) > 0);
+  const wiredClients = allClients.filter(c => !c.wireless);
+  const totalCols = 1 + Math.max(1, gateways.length) + Math.max(1, switches.length) + (hasAPs ? 1 : 0) + (hasWifiClients ? 1 : 0);
+  const padding = 50;
+  const spacing = (W - padding * 2) / totalCols;
+  let xCursor = padding + spacing * 0.5;
+
+  const wanX = xCursor;
+  html += deviceNode(wanX, midY, {
+    name: 'WAN', model: '', ip: '', uptime: '',
+    icon: wanIcon, color: nodeStroke, badge: 0,
+  });
+  xCursor += spacing;
+
+  const gwNodes = [];
+  gateways.forEach(gw => {
+    const x = xCursor;
+    gwNodes.push({ x, y: midY, data: gw });
+    const online = isDeviceOnline(gw);
+    const uptime = gw.uptime || formatUptime(gw.uptimeLong);
+    const model = gw.showModel || gw.model || '';
+    html += link(wanX + 22, midY, x - 26, midY, '1 Gbps');
+    html += deviceNode(x, midY, {
+      name: gw.name || 'Gateway', model, ip: gw.ip || '',
+      uptime: uptime || '', icon: gwIcon,
+      color: online ? nodeStroke : '#ef4444', badge: 0,
+      deviceId: gw.mac || gw.id,
+    });
+    xCursor += spacing;
+  });
+
+  if (gateways.length === 0) {
+    gwNodes.push({ x: xCursor, y: midY });
+    xCursor += spacing;
+  }
+
+  const swNodes = [];
+  switches.forEach(sw => {
+    const x = xCursor;
+    swNodes.push({ x, y: midY, data: sw });
+    const online = isDeviceOnline(sw);
+    const uptime = sw.uptime || formatUptime(sw.uptimeLong);
+    const clients = sw.clientNum || sw.numClient || 0;
+    const model = sw.showModel || sw.model || '';
+    const prevNode = gwNodes[gwNodes.length - 1] || { x: wanX, y: midY };
+    html += link(prevNode.x + 26, midY, x - 28, midY, '1 Gbps');
+    html += deviceNode(x, midY, {
+      name: sw.name || 'Switch', model,
+      ip: sw.ip || '', uptime: uptime || '',
+      icon: swIcon, color: online ? nodeStroke : '#ef4444', badge: clients,
+      deviceId: sw.mac || sw.id,
+    });
+    xCursor += spacing;
+  });
+
+  const branchX = swNodes.length > 0 ? swNodes[swNodes.length - 1].x : gwNodes[gwNodes.length - 1].x;
+
+  if (hasAPs) {
+    const apXCol = xCursor;
+    const apSpacing = Math.min(100, (H * 0.35) / Math.max(aps.length, 1));
+    aps.forEach((ap, i) => {
+      const apYPos = aps.length === 1 ? midY - 60 : midY - 30 - (aps.length - 1 - i) * apSpacing;
+      const online = isDeviceOnline(ap);
+      const clients = ap.clientNum || ap.numClient || 0;
+      const uptime = ap.uptime || formatUptime(ap.uptimeLong);
+      const model = ap.showModel || ap.model || '';
+      html += curvedLink(branchX + 28, midY, apXCol - 16, apYPos);
+      html += deviceNode(apXCol, apYPos, {
+        name: ap.name || 'AP', model, ip: ap.ip || '',
+        uptime: uptime || '',
+        icon: apIcon, color: online ? nodeStroke : '#ef4444', badge: clients,
+        deviceId: ap.mac || ap.id,
+      });
+      if (clients > 0 && hasWifiClients) {
+        const cgX = apXCol + spacing;
+        html += link(apXCol + 16, apYPos, cgX - 18, apYPos, '');
+        html += deviceNode(cgX, apYPos, {
+          name: `${clients} WiFi`, model: '', ip: '', uptime: '',
+          icon: clientGroupIcon, color: nodeStroke, badge: 0,
+        });
+      }
+    });
+    xCursor += spacing;
+  }
+
+  if (wiredClients.length > 0) {
+    const wcX = branchX + (hasAPs ? spacing * 0.5 : spacing);
+    const wcY = midY + 80;
+    html += curvedLink(branchX + 28, midY, wcX - 18, wcY);
+    html += deviceNode(wcX, wcY, {
+      name: `${wiredClients.length} Wired`, model: '', ip: '', uptime: '',
+      icon: clientGroupIcon, color: subColor, badge: 0,
+    });
+  }
+
+  if (gateways.length === 0 && switches.length === 0 && aps.length === 0) {
+    html += `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="${labelColor}" font-size="12" ${f}>No devices detected</text>`;
+  }
+
+  svg.innerHTML = html;
+}
+
+// ============ TICKER ============
+function renderTicker(events) {
+  const el = document.getElementById('ticker-content');
+  if (!events || events.length === 0) {
+    el.innerHTML = '<span class="ticker-event"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green)"></span> System operational</span>';
+    return;
+  }
+  const items = events.map(e => {
+    const level = e.level || 0;
+    const colors = ['var(--green)', 'var(--amber)', 'var(--red)', 'var(--accent)'];
+    const color = colors[level] || 'var(--text-muted)';
+    const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('en-US', { hour12: false }) : '';
+    return `<span class="ticker-event"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color}"></span> ${time} ${escapeHtml(e.msg || e.message || '')}</span>`;
+  }).join('');
+  el.innerHTML = items + items;
+}
+
+// ============ ROTATING PANEL ============
+function startRotation() {
+  renderCurrentRotation();
+  rotationTimer = setInterval(() => {
+    rotationIndex = (rotationIndex + 1) % ROTATION_VIEWS.length;
+    renderCurrentRotation();
+  }, ROTATION_INTERVAL);
+  animateProgress();
+}
+
+function animateProgress() {
+  const bar = document.getElementById('rotation-progress');
+  bar.style.width = '100%';
+  bar.style.transition = 'none';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      bar.style.transition = `width ${ROTATION_INTERVAL}ms linear`;
+      bar.style.width = '0%';
+    });
+  });
+  setTimeout(animateProgress, ROTATION_INTERVAL);
+}
+
+function renderCurrentRotation() {
+  const viewName = ROTATION_VIEWS[rotationIndex];
+  const el = document.getElementById('rotating-content');
+  const label = document.getElementById('rotating-label');
+  const counter = document.getElementById('rotating-counter');
+  const labels = { clients: 'Top Clients', aps: 'Access Points', events: 'Recent Events', traffic: 'Traffic Summary', stats: 'Network Stats' };
+  const dots = { clients: 'var(--accent)', aps: 'var(--green)', events: 'var(--amber)', traffic: 'var(--cyan)', stats: 'var(--purple)' };
+  label.innerHTML = `<div class="panel-header-dot" style="background:${dots[viewName] || 'var(--purple)'}"></div> ${labels[viewName] || viewName}`;
+  counter.textContent = `${rotationIndex + 1}/${ROTATION_VIEWS.length}`;
+
+  let html = '<div class="rotating-view">';
+  switch (viewName) {
+    case 'clients': html += renderRotClients(); break;
+    case 'aps': html += renderRotAPs(); break;
+    case 'events': html += renderRotEvents(); break;
+    case 'traffic': html += renderRotTraffic(); break;
+    case 'stats': html += renderRotStats(); break;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderRotClients() {
+  if (!allClients.length) return '<div class="no-data">No clients connected</div>';
+  let sorted = [...allClients];
+  if (sortState.column) {
+    sorted.sort((a, b) => {
+      let va, vb;
+      switch (sortState.column) {
+        case 'name': va = (a.name || a.mac || '').toLowerCase(); vb = (b.name || b.mac || '').toLowerCase(); return sortState.ascending ? va.localeCompare(vb) : vb.localeCompare(va);
+        case 'download': va = a.download || 0; vb = b.download || 0; break;
+        case 'upload': va = a.upload || 0; vb = b.upload || 0; break;
+        default: va = a.download || 0; vb = b.download || 0;
+      }
+      return sortState.ascending ? va - vb : vb - va;
+    });
+  } else {
+    sorted.sort((a, b) => ((b.download || 0) + (b.upload || 0)) - ((a.download || 0) + (a.upload || 0)));
+  }
+  const top = sorted.slice(0, 8);
+  function arrow(col) { return sortState.column === col ? `<span class="sort-arrow">${sortState.ascending ? '\u25B2' : '\u25BC'}</span>` : ''; }
+  let html = '<table class="rot-table"><thead><tr>';
+  html += `<th class="sortable" onclick="sortRotTable('name')">Name${arrow('name')}</th>`;
+  html += '<th>VLAN</th><th>Type</th>';
+  html += `<th class="sortable" onclick="sortRotTable('download')">DL${arrow('download')}</th>`;
+  html += `<th class="sortable" onclick="sortRotTable('upload')">UL${arrow('upload')}</th>`;
+  html += '</tr></thead><tbody>';
+  top.forEach(c => {
+    const name = escapeHtml(c.name || c.mac || '--');
+    const type = c.wireless ? '<span class="badge badge-accent">WiFi</span>' : '<span class="badge badge-amber">Wired</span>';
+    const vid = escapeHtml(c.vid || c.vlan || '--');
+    html += `<tr><td>${name}</td><td>${vid}</td><td>${type}</td><td>${formatBytes(c.download || 0)}</td><td>${formatBytes(c.upload || 0)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderRotAPs() {
+  const aps = allDevices.filter(d => d.type === 'ap');
+  if (!aps.length) return '<div class="no-data">No access points found</div>';
+  let html = '<table class="rot-table"><thead><tr><th>Name</th><th>Model</th><th>IP</th><th>Clients</th><th>Status</th></tr></thead><tbody>';
+  aps.forEach(ap => {
+    const online = isDeviceOnline(ap);
+    const badge = online ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>';
+    const clients = ap.clientNum || ap.numClient || 0;
+    html += `<tr><td>${escapeHtml(ap.name || '--')}</td><td>${escapeHtml(ap.model || '--')}</td><td>${escapeHtml(ap.ip || '--')}</td><td>${clients}</td><td>${badge}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function renderRotEvents() {
+  if (!allEvents.length) return '<div class="no-data">No recent events</div>';
+  let html = '';
+  allEvents.slice(0, 6).forEach(e => {
+    const level = e.level || 0;
+    const colors = ['var(--green)', 'var(--amber)', 'var(--red)', 'var(--accent)'];
+    const color = colors[level] || 'var(--text-muted)';
+    const time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '--';
+    html += `<div class="event-item"><div class="event-dot" style="background:${color}"></div><div><div class="event-time">${time}</div><div class="event-msg">${escapeHtml(e.msg || e.message || 'Unknown event')}</div></div></div>`;
+  });
+  return html;
+}
+
+function renderRotTraffic() {
+  const { timestamps, download, upload } = trafficData;
+  const len = timestamps.length;
+  if (len < 2) return '<div class="no-data">Collecting traffic data...</div>';
+  const totalDl = download.reduce((a, b) => a + b, 0);
+  const totalUl = upload.reduce((a, b) => a + b, 0);
+  const avgDl = totalDl / len;
+  const avgUl = totalUl / len;
+  const peakDl = Math.max(...download);
+  const peakUl = Math.max(...upload);
+  const currentDl = download[len - 1] || 0;
+  const currentUl = upload[len - 1] || 0;
+  const elapsed = Math.round((timestamps[len - 1] - timestamps[0]) / 60000);
+  return `<div class="net-stats-grid">
+    <div class="net-stat-item"><div class="label">Current DL</div><div class="value" style="color:var(--accent-text)">${formatBytes(currentDl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Current UL</div><div class="value" style="color:var(--green)">${formatBytes(currentUl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Peak DL</div><div class="value" style="color:var(--accent-text)">${formatBytes(peakDl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Peak UL</div><div class="value" style="color:var(--green)">${formatBytes(peakUl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Avg DL</div><div class="value">${formatBytes(avgDl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Avg UL</div><div class="value">${formatBytes(avgUl)}/s</div></div>
+    <div class="net-stat-item"><div class="label">Total Transfer</div><div class="value">${formatBytes(totalDl + totalUl)}</div></div>
+    <div class="net-stat-item"><div class="label">Span</div><div class="value">${elapsed} min</div></div>
+  </div>`;
+}
+
+function renderRotStats() {
+  const gw = allDevices.find(d => d.type === 'gateway');
+  const wifi = allClients.filter(c => c.wireless).length;
+  const wired = allClients.filter(c => !c.wireless).length;
+  let totalDl = 0, totalUl = 0;
+  allClients.forEach(c => { totalDl += (c.download || 0); totalUl += (c.upload || 0); });
+  const vlans = new Set(allClients.map(c => c.vid || c.vlan || 0));
+  return `<div class="net-stats-grid">
+    <div class="net-stat-item"><div class="label">Gateway</div><div class="value">${gw ? escapeHtml(gw.name || gw.ip || 'Online') : 'N/A'}</div></div>
+    <div class="net-stat-item"><div class="label">WAN IP</div><div class="value">${escapeHtml(gw?.ip || '--')}</div></div>
+    <div class="net-stat-item"><div class="label">WiFi Clients</div><div class="value" style="color:var(--accent-text)">${wifi}</div></div>
+    <div class="net-stat-item"><div class="label">Wired Clients</div><div class="value">${wired}</div></div>
+    <div class="net-stat-item"><div class="label">Total Download</div><div class="value" style="color:var(--accent-text)">${formatBytes(totalDl)}</div></div>
+    <div class="net-stat-item"><div class="label">Total Upload</div><div class="value">${formatBytes(totalUl)}</div></div>
+    <div class="net-stat-item"><div class="label">VLANs Active</div><div class="value">${vlans.size}</div></div>
+    <div class="net-stat-item"><div class="label">Gateway Uptime</div><div class="value">${gw ? escapeHtml(gw.uptime || formatUptime(gw.uptimeLong)) : '--'}</div></div>
+  </div>`;
+}
+
+// ============ FULLSCREEN ============
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+
+// ============ REFRESH COUNTDOWN ============
+let refreshCountdown = 30;
+const REFRESH_CIRCUMFERENCE = 2 * Math.PI * 8;
+
+function initRefreshRing() {
+  const fill = document.getElementById('refresh-ring-fill');
+  fill.setAttribute('stroke-dasharray', REFRESH_CIRCUMFERENCE);
+  fill.setAttribute('stroke-dashoffset', '0');
+}
+
+function startRefreshCountdown() {
+  refreshCountdown = 30;
+  initRefreshRing();
+  setInterval(() => {
+    refreshCountdown--;
+    if (refreshCountdown <= 0) refreshCountdown = 30;
+    document.getElementById('refresh-countdown').textContent = refreshCountdown + 's';
+    const fill = document.getElementById('refresh-ring-fill');
+    const offset = REFRESH_CIRCUMFERENCE * (refreshCountdown / 30);
+    fill.setAttribute('stroke-dashoffset', REFRESH_CIRCUMFERENCE - offset);
+  }, 1000);
+}
+
+// ============ CLIENT SEARCH ============
+let clientSearchTerm = '';
+function filterClients() {
+  clientSearchTerm = document.getElementById('client-search-input').value.toLowerCase().trim();
+  renderClientBreakdown(allClients);
+}
+
+// ============ DEVICE DETAIL OVERLAY ============
+let selectedDevice = null;
+
+function showDeviceDetail(deviceId) {
+  const device = allDevices.find(d => (d.mac || d.id) === deviceId);
+  if (!device) return;
+  selectedDevice = device;
+  const online = isDeviceOnline(device);
+  const clients = device.clientNum || device.numClient || 0;
+  const uptime = device.uptime || formatUptime(device.uptimeLong);
+
+  document.getElementById('detail-title').textContent = device.name || device.mac || 'Device';
+
+  let html = '';
+  html += `<div class="detail-item"><div class="label">Status</div><div class="value">${online ? '<span style="color:var(--green)">Online</span>' : '<span style="color:var(--red)">Offline</span>'}</div></div>`;
+  html += `<div class="detail-item"><div class="label">Type</div><div class="value">${escapeHtml(device.type || '--')}</div></div>`;
+  html += `<div class="detail-item"><div class="label">Model</div><div class="value">${escapeHtml(device.showModel || device.model || '--')}</div></div>`;
+  html += `<div class="detail-item"><div class="label">IP Address</div><div class="value">${escapeHtml(device.ip || '--')}</div></div>`;
+  html += `<div class="detail-item"><div class="label">MAC Address</div><div class="value">${escapeHtml(device.mac || '--')}</div></div>`;
+  html += `<div class="detail-item"><div class="label">Clients</div><div class="value">${clients}</div></div>`;
+  html += `<div class="detail-item"><div class="label">Uptime</div><div class="value">${escapeHtml(uptime || '--')}</div></div>`;
+  html += `<div class="detail-item"><div class="label">Firmware</div><div class="value">${escapeHtml(device.firmwareVersion || device.version || '--')}</div></div>`;
+  if (device.type === 'ap') {
+    html += `<div class="detail-item"><div class="label">Channel (2.4G)</div><div class="value">${device.channel2g || device.radioChannel2g || '--'}</div></div>`;
+    html += `<div class="detail-item"><div class="label">Channel (5G)</div><div class="value">${device.channel5g || device.radioChannel5g || '--'}</div></div>`;
+  }
+  if (device.type === 'switch') {
+    html += `<div class="detail-item"><div class="label">Ports</div><div class="value">${device.portNum || '--'}</div></div>`;
+    html += `<div class="detail-item"><div class="label">PoE</div><div class="value">${device.poe ? 'Yes' : 'No'}</div></div>`;
+  }
+  const deviceClients = allClients.filter(c =>
+    c.apMac === device.mac || c.switchMac === device.mac || c.gatewayMac === device.mac
+  );
+  if (deviceClients.length > 0) {
+    html += '<div class="detail-item full"><div class="label">Connected Clients</div><div class="value" style="font-size:11px">';
+    deviceClients.slice(0, 10).forEach(c => { html += `${escapeHtml(c.name || c.mac)} `; });
+    if (deviceClients.length > 10) html += `+${deviceClients.length - 10} more`;
+    html += '</div></div>';
+  }
+
+  document.getElementById('detail-content').innerHTML = html;
+  document.getElementById('device-detail-overlay').classList.add('active');
+}
+
+function closeDetail() {
+  document.getElementById('device-detail-overlay').classList.remove('active');
+  selectedDevice = null;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+// ============ SORTABLE TABLES ============
+let sortState = { column: null, ascending: true };
+
+function sortRotTable(column) {
+  if (sortState.column === column) {
+    sortState.ascending = !sortState.ascending;
+  } else {
+    sortState.column = column;
+    sortState.ascending = true;
+  }
+  renderCurrentRotation();
+}
+</script>
+</body>
+</html>
