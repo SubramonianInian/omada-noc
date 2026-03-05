@@ -1,45 +1,79 @@
-# Omada Network Dashboard
+# Omada NOC
 
-A clean, dark-themed dashboard for TP-Link Omada controllers.
+Real-time network operations center dashboard for TP-Link Omada SDN controllers.
 
-## Setup
-
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Start the proxy server**
-   ```bash
-   node server.js
-   ```
-
-3. **Open the dashboard**
-   Visit: http://localhost:3737
-
-## Login
-
-Enter your Omada controller details:
-- **Host**: IP address of your Omada controller (e.g., `192.168.1.100`)
-- **Port**: Default is `8043` (HTTPS)
-- **Username/Password**: Your Omada admin credentials
+![Dark Theme](https://img.shields.io/badge/theme-dark%20%2F%20light-blue)
+![Docker](https://img.shields.io/badge/docker-ready-green)
+![Node](https://img.shields.io/badge/node-20%2B-brightgreen)
 
 ## Features
 
-- 📊 **Overview** — Live stats: clients, APs, switches, gateways
-- 👥 **Clients** — All connected devices with signal strength, IP, MAC, traffic
-- 📡 **Access Points** — AP status, models, client count, channels
-- 🔀 **Switches** — Switch status, ports, uptime
-- 🔔 **Events** — Recent network activity log
-- 🔄 Auto-refreshes every 30 seconds
+- **Animated Network Topology** — Interactive SVG diagram with data flow particles, pulsing nodes, and spinning WAN globe
+- **Live Traffic Monitoring** — Real-time download/upload chart from gateway `txRate`/`rxRate` with gradient fills and glow indicators
+- **Client Breakdown** — Clients grouped by VLAN with search, WiFi/wired split, and download/upload totals
+- **Device Health** — Status tiles for gateways, switches, and access points with uptime, IP, model info
+- **Rotating Info Panel** — Auto-cycles through top clients, AP list, events, traffic summary, and network stats
+- **Event Ticker** — Scrolling event feed at the bottom
+- **Dark / Light Mode** — Toggle with persistence via localStorage
+- **Fullscreen Mode** — Built for wall-mounted NOC monitors
+- **30s Auto-Refresh** — With animated countdown ring
 
-## Notes
+## Quick Start
 
-- The proxy server bypasses SSL certificate warnings (self-signed certs on Omada are fine)
-- Your credentials are only used locally — nothing is sent externally
-- Supports Omada SDN Controller v5.x API (v2)
+```bash
+npm install
+node server.js
+```
+
+Open http://localhost:3737 and enter your Omada controller credentials.
+
+## Docker
+
+```bash
+# Build
+docker build -t omada-noc .
+
+# Run
+docker run -d -p 3737:3737 --name omada-noc omada-noc
+```
+
+Or use the npm scripts:
+
+```bash
+npm run docker:build
+npm run docker:run
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3737` | Server port |
+| `DEBUG_TRAFFIC` | (unset) | Set to `1` to log traffic polling data |
+
+## Architecture
+
+```
+Browser  →  Express (port 3737)  →  Omada Controller API v2
+                │
+                ├── /api/login          → Authenticate + get CSRF token
+                ├── /api/dashboard      → Clients, devices, events
+                ├── /api/traffic-history → Polled gateway throughput rates
+                ├── /api/alerts         → Recent events
+                └── /api/health         → Health check
+```
+
+- **Backend**: Node.js + Express proxy to Omada API (bypasses self-signed SSL)
+- **Frontend**: Single HTML file with inline CSS/JS (no build tools)
+- **Traffic Polling**: Fetches gateway `txRate`/`rxRate` every 30s, falls back to cumulative byte deltas
+- **Security**: XSS-safe via `escapeHtml()` on all dynamic content, security headers, no CORS needed
 
 ## Requirements
 
-- Node.js 16+
-- Omada SDN Controller (local network access)
+- Node.js 18+ (20 recommended)
+- TP-Link Omada SDN Controller v5.x (API v2)
+- Network access to the controller
+
+## License
+
+ISC
