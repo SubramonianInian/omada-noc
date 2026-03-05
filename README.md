@@ -30,18 +30,15 @@ Open http://localhost:3737 and enter your Omada controller credentials.
 ## Docker
 
 ```bash
-# Build
-docker build -t omada-noc .
-
-# Run
-docker run -d -p 3737:3737 --name omada-noc omada-noc
+# Docker Compose (recommended)
+docker compose up -d
 ```
 
-Or use the npm scripts:
+Or build and run manually:
 
 ```bash
-npm run docker:build
-npm run docker:run
+docker build -t omada-noc .
+docker run -d -p 3737:3737 --name omada-noc omada-noc
 ```
 
 ## Environment Variables

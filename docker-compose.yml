@@ -1,0 +1,9 @@
+services:
+  omada-noc:
+    build: .
+    container_name: omada-noc
+    ports:
+      - "3737:3737"
+    environment:
+      - PORT=3737
+    restart: unless-stopped
