@@ -29,6 +29,22 @@ app.use('/api', (req, res, next) => {
 // Ignore self-signed SSL certs from Omada controller
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
+// The Omada API answers HTTP 200 even when a call fails - the real status
+// lives in body.errorCode (0 = success). axios only rejects on non-2xx, so
+// without this every failure looked like a success with an undefined result.
+function unwrap(resp, what) {
+  const data = resp && resp.data;
+  if (!data || typeof data.errorCode === 'undefined') {
+    throw new Error(`${what}: unexpected response from controller`);
+  }
+  if (data.errorCode !== 0) {
+    const err = new Error(data.msg || `${what} failed`);
+    err.errorCode = data.errorCode;
+    throw err;
+  }
+  return data.result;
+}
+
 let sessionData = {
   token: null,
   cookies: null,
@@ -64,7 +80,7 @@ async function pollTraffic() {
   if (!gatewayMac) {
     try {
       const devResp = await axios.get(`${base}/devices?currentPage=1&currentPageSize=50`, { httpsAgent, headers, timeout: 10000 });
-      const devList = devResp.data?.result || [];
+      const devList = unwrap(devResp, 'Device list') || [];
       const devArr = Array.isArray(devList) ? devList : (devList.data || []);
       const gw = devArr.find(d => d.type === 'gateway');
       if (gw) {
@@ -80,7 +96,7 @@ async function pollTraffic() {
 
   // Fetch gateway details — has txRate, rxRate (bytes/sec), download, upload (cumulative bytes)
   const gwResp = await axios.get(`${base}/gateways/${gatewayMac}`, { httpsAgent, headers, timeout: 10000 });
-  const gw = gwResp.data?.result;
+  const gw = unwrap(gwResp, 'Gateway detail');
   if (!gw) return;
 
   // txRate/rxRate are real-time throughput in bytes/sec from the gateway
@@ -144,24 +160,25 @@ app.post('/api/login', async (req, res) => {
   const baseUrl = `https://${host}`;
 
   try {
-    const infoResp = await axios.get(`${baseUrl}/api/info`, { httpsAgent, timeout: 10000 });
-    const controllerId = infoResp.data?.result?.omadacId;
-    if (!controllerId) return res.status(500).json({ error: 'Cannot get controller ID' });
-
-    const loginResp = await axios.post(
-      `${baseUrl}/${controllerId}/api/v2/hotspot/login`,
-      { username, password },
-      { httpsAgent, withCredentials: true, timeout: 10000 }
+    const info = unwrap(
+      await axios.get(`${baseUrl}/api/info`, { httpsAgent, timeout: 10000 }),
+      'Controller info'
     );
+    const controllerId = info?.omadacId;
+    if (!controllerId) return res.status(502).json({ error: 'Controller returned no omadacId' });
 
-    const loginResp2 = await axios.post(
+    // NOTE: a call to /api/v2/hotspot/login used to run here. Its response was
+    // never read - it is the captive-portal endpoint, not the controller login -
+    // so it only submitted the credentials a second time for no reason.
+    const loginResp = await axios.post(
       `${baseUrl}/${controllerId}/api/v2/login`,
       { username, password },
       { httpsAgent, headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
     );
 
-    const token = loginResp2.data?.result?.token;
-    const rawCookies = loginResp2.headers['set-cookie'];
+    const token = unwrap(loginResp, 'Login')?.token;
+    if (!token) throw new Error('Login succeeded but the controller returned no CSRF token');
+    const rawCookies = loginResp.headers['set-cookie'];
     const cookieStr = rawCookies ? rawCookies.map(c => c.split(';')[0]).join('; ') : '';
 
     sessionData = { token, cookies: cookieStr, baseUrl, controllerId };
@@ -171,7 +188,7 @@ app.post('/api/login', async (req, res) => {
       { httpsAgent, headers: { 'Csrf-Token': token, Cookie: cookieStr }, timeout: 10000 }
     );
 
-    const sites = sitesResp.data?.result?.data || [];
+    const sites = unwrap(sitesResp, 'Site list')?.data || [];
     if (sites.length > 0) {
       sessionData.siteId = sites[0].id;
     }
@@ -182,7 +199,10 @@ app.post('/api/login', async (req, res) => {
     res.json({ success: true, sites, controllerId });
   } catch (err) {
     console.error('Login error:', err.message);
-    res.status(401).json({ error: err.message || 'Login failed' });
+    // errorCode set => the controller rejected us (bad credentials, etc).
+    // Absent => we never got a valid reply (unreachable, TLS, redirect).
+    const status = err.errorCode !== undefined ? 401 : 502;
+    res.status(status).json({ error: err.message || 'Login failed', errorCode: err.errorCode });
   }
 });
 
@@ -203,8 +223,12 @@ async function omadaGet(apiPath) {
     httpsAgent,
     headers: { 'Csrf-Token': token, Cookie: cookies },
     timeout: 15000,
+    // An expired session answers 302 -> /login. Following it produced a
+    // confusing "Protocol http: not supported" instead of a real message.
+    maxRedirects: 0,
+    validateStatus: s => s >= 200 && s < 300,
   });
-  return resp.data?.result;
+  return unwrap(resp, `GET ${apiPath}`);
 }
 
 // DASHBOARD DATA
