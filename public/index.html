@@ -12,20 +12,20 @@
     --radius: 10px;
     --radius-sm: 6px;
     --transition: 0.25s ease;
-    --gap: 2px;
+    --gap: 6px;
   }
 
   [data-theme="dark"] {
-    --bg: #050507;
-    --surface: #0c0c0f;
-    --surface2: #111116;
-    --surface3: #18181e;
-    --border: #1e1e25;
-    --border-subtle: #151519;
-    --accent: #3b82f6;
-    --accent-soft: rgba(59,130,246,0.08);
-    --accent-text: #60a5fa;
-    --accent-glow: rgba(59,130,246,0.15);
+    --bg: #050704;
+    --surface: #0a0f09;
+    --surface2: #0f150e;
+    --surface3: #151c13;
+    --border: #1c2418;
+    --border-subtle: #141a12;
+    --accent: #9fef00;
+    --accent-soft: rgba(159,239,0,0.07);
+    --accent-text: #b8ff3d;
+    --accent-glow: rgba(159,239,0,0.15);
     --green: #10b981;
     --green-soft: rgba(16,185,129,0.08);
     --green-glow: rgba(16,185,129,0.15);
@@ -41,10 +41,10 @@
     --text-muted: #45454d;
     --shadow: 0 2px 8px rgba(0,0,0,0.5);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-    --topo-node-fill: #111116;
+    --topo-node-fill: #0f150e;
     --chart-grid: rgba(255,255,255,0.03);
     --chart-axis: #3a3a42;
-    --glow-accent: 0 0 20px rgba(59,130,246,0.08);
+    --glow-accent: 0 0 20px rgba(159,239,0,0.10);
     --glow-green: 0 0 20px rgba(16,185,129,0.08);
   }
 
@@ -55,10 +55,10 @@
     --surface3: #ededf0;
     --border: #e0e0e5;
     --border-subtle: #f0f0f3;
-    --accent: #2563eb;
-    --accent-soft: rgba(37,99,235,0.06);
-    --accent-text: #2563eb;
-    --accent-glow: rgba(37,99,235,0.08);
+    --accent: #6aa300;
+    --accent-soft: rgba(106,163,0,0.07);
+    --accent-text: #558400;
+    --accent-glow: rgba(106,163,0,0.10);
     --green: #059669;
     --green-soft: rgba(5,150,105,0.06);
     --green-glow: rgba(5,150,105,0.08);
@@ -105,7 +105,7 @@
   }
   .login-header { margin-bottom: 36px; text-align: center; }
   .login-logo {
-    width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), #4d7c00);
     border-radius: 14px; display: flex; align-items: center;
     justify-content: center; font-size: 20px; font-weight: 700; color: #fff;
     margin: 0 auto 16px; box-shadow: 0 4px 16px rgba(59,130,246,0.3);
@@ -161,7 +161,7 @@
   .noc-logo { display: flex; align-items: center; gap: 12px; }
   .noc-logo-mark {
     width: 30px; height: 30px;
-    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    background: linear-gradient(135deg, var(--accent), #4d7c00);
     border-radius: 8px; display: flex; align-items: center;
     justify-content: center; font-size: 13px; font-weight: 700; color: #fff;
     box-shadow: 0 2px 8px rgba(59,130,246,0.25);
@@ -222,7 +222,12 @@
     flex-shrink: 0;
   }
   .noc-stat {
-    background: var(--surface); padding: 14px 20px;
+    background:
+      radial-gradient(130% 120% at 100% 0%, var(--accent-soft) 0%, transparent 60%),
+      var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    padding: 14px 20px;
     display: flex; align-items: center; gap: 14px;
     transition: background var(--transition);
   }
@@ -260,7 +265,14 @@
   }
 
   .noc-panel {
-    background: var(--surface); overflow: hidden; position: relative;
+    /* a faint accent wash from the top-right corner, the way the HTB cards
+       are lit, over the flat surface colour */
+    background:
+      radial-gradient(130% 90% at 100% 0%, var(--accent-soft) 0%, transparent 55%),
+      var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    overflow: hidden; position: relative;
   }
   .panel-header {
     font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
@@ -1101,7 +1113,7 @@ function renderTrafficChart() {
 
   const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   const greenColor = getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
-  const accentFill = isDark ? 'rgba(59,130,246,0.15)' : 'rgba(37,99,235,0.1)';
+  const accentFill = isDark ? 'rgba(159,239,0,0.13)' : 'rgba(106,163,0,0.1)';
   const greenFill = isDark ? 'rgba(16,185,129,0.12)' : 'rgba(5,150,105,0.08)';
 
   drawArea(upload, greenColor, greenFill);
@@ -1224,9 +1236,9 @@ function renderTopology(gateways, switches, aps) {
 
   const isDark = document.documentElement.dataset.theme === 'dark';
   const lineColor = isDark ? '#222228' : '#d4d4d8';
-  const nodeStroke = isDark ? '#3b82f6' : '#2563eb';
+  const nodeStroke = isDark ? '#9fef00' : '#6aa300';
   const nodeFill = isDark ? '#111116' : '#ffffff';
-  const dotFill = isDark ? '#1a2744' : '#dbeafe';
+  const dotFill = isDark ? '#1d2b08' : '#eaf7cf';
   const labelColor = isDark ? '#52525b' : '#71717a';
   const nameColor = isDark ? '#e4e4e7' : '#18181b';
   const subColor = isDark ? '#3a3a42' : '#a1a1aa';
