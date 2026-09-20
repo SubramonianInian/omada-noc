@@ -175,8 +175,8 @@
     padding: 1px 6px; border-radius: 4px; margin-left: -4px;
   }
   .noc-clock {
-    font-family: var(--font-mono); font-size: 22px;
-    font-weight: 500; letter-spacing: 2px; color: var(--text);
+    font-family: var(--font-mono); font-size: 13px;
+    font-weight: 500; letter-spacing: 1.5px; color: var(--text-muted);
     position: absolute; left: 50%; transform: translateX(-50%);
   }
   .header-right { display: flex; align-items: center; gap: 12px; }
@@ -248,8 +248,8 @@
   /* ============ MAIN GRID ============ */
   #noc-grid {
     display: grid;
-    grid-template-columns: 190px 1fr 320px;
-    grid-template-rows: 2fr 1fr;
+    grid-template-columns: 190px 1fr 380px;
+    grid-template-rows: minmax(0, 1fr) 220px;
     grid-template-areas:
       "devices  topology  clients"
       "devices  traffic   rotating";
@@ -413,7 +413,7 @@
     font-family: var(--font-mono); font-size: 9px;
     padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 4px; color: var(--text-secondary); white-space: nowrap;
-    max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+    max-width: 158px; overflow: hidden; text-overflow: ellipsis;
     transition: all var(--transition);
   }
   .client-chip:hover { border-color: var(--accent); }
@@ -1143,13 +1143,13 @@ function renderClientBreakdown(clients) {
     html += `<div class="vlan-header"><span class="vlan-name" style="color:${color}">VLAN ${vid || 'Default'}</span><span class="vlan-count">${vlanClients.length} (${pct}%)</span></div>`;
     html += `<div class="vlan-bar-track"><div class="vlan-bar-fill" style="width:${pct}%;background:${color};opacity:0.6;"></div></div>`;
     html += '<div class="client-mini-list">';
-    vlanClients.slice(0, 6).forEach(c => {
+    vlanClients.slice(0, 10).forEach(c => {
       const name = escapeHtml(c.name || c.mac || '--');
       const cls = c.wireless ? 'wifi' : 'wired';
       html += `<div class="client-chip ${cls}">${name}</div>`;
     });
-    if (vlanClients.length > 6) {
-      html += `<div class="client-chip" style="color:var(--accent-text)">+${vlanClients.length - 6}</div>`;
+    if (vlanClients.length > 10) {
+      html += `<div class="client-chip" style="color:var(--accent-text)">+${vlanClients.length - 10}</div>`;
     }
     html += '</div></div>';
   });
@@ -1426,7 +1426,7 @@ function renderTopology(gateways, switches, aps) {
 
   if (hasAPs) {
     const apXCol = xCursor;
-    const apSpacing = Math.min(100, (H * 0.35) / Math.max(aps.length, 1));
+    const apSpacing = Math.min(150, (H * 0.52) / Math.max(aps.length, 1));
     aps.forEach((ap, i) => {
       const apYPos = aps.length === 1 ? midY - 60 : midY - 30 - (aps.length - 1 - i) * apSpacing;
       const online = isDeviceOnline(ap);
@@ -1454,7 +1454,7 @@ function renderTopology(gateways, switches, aps) {
 
   if (wiredClients.length > 0) {
     const wcX = branchX + (hasAPs ? spacing * 0.5 : spacing);
-    const wcY = midY + 80;
+    const wcY = midY + Math.min(150, H * 0.22);
     html += curvedLink(branchX + 28, midY, wcX - 18, wcY);
     html += deviceNode(wcX, wcY, {
       name: `${wiredClients.length} Wired`, model: '', ip: '', uptime: '',
