@@ -858,15 +858,7 @@ async function doLogin() {
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Login failed');
-    loginTime = Date.now();
-    document.getElementById('noc-host').textContent = host;
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('noc').classList.add('active');
-    startClock();
-    await loadDashboard();
-    setInterval(loadDashboard, 30000);
-    startRotation();
-    startRefreshCountdown();
+    await enterDashboard(host, Date.now());
   } catch (e) {
     showError(e.message);
   } finally {
@@ -874,6 +866,37 @@ async function doLogin() {
     btn.textContent = 'Connect';
   }
 }
+
+// Bring up the NOC view. Shared by a fresh login and by a reload that
+// rejoins a session the server still holds.
+let dashboardStarted = false;
+async function enterDashboard(host, startedAt) {
+  if (dashboardStarted) return;
+  dashboardStarted = true;
+  loginTime = startedAt || Date.now();
+  document.getElementById('noc-host').textContent = host || '--';
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('noc').classList.add('active');
+  startClock();
+  await loadDashboard();
+  setInterval(loadDashboard, 30000);
+  startRotation();
+  startRefreshCountdown();
+}
+
+// The session lives on the server, but nothing used to ask about it on load,
+// so refreshing the page dropped you back to the login form while the server
+// was still authenticated. Ask first; only show the form if there is no session.
+async function boot() {
+  try {
+    const resp = await fetch(`${API}/health`);
+    const data = await resp.json();
+    if (data && data.authenticated) await enterDashboard(data.host, data.loginTime);
+  } catch (e) {
+    /* no session, or the server is unreachable: fall through to the login form */
+  }
+}
+document.addEventListener('DOMContentLoaded', boot);
 
 // ============ CLOCK ============
 function startClock() {
@@ -986,7 +1009,16 @@ function renderTrafficChart() {
   const chartH = H - padT - padB;
 
   const allVals = [...download, ...upload];
-  const maxVal = Math.max(...allVals, 1);
+  // Scale to the 95th percentile rather than the absolute peak: one burst
+  // used to rescale the chart and flatten every other sample onto the
+  // baseline. Samples above the ceiling are clamped when drawn, so a spike
+  // flat-tops at the top gridline instead of squashing the rest.
+  const sortedVals = allVals.filter(v => v > 0).sort((a, b) => a - b);
+  const p95 = sortedVals.length
+    ? sortedVals[Math.min(sortedVals.length - 1, Math.floor(sortedVals.length * 0.95))]
+    : 0;
+  const MIN_CEILING = 131072; // 128 KB/s floor, so an idle link is not all noise
+  const maxVal = Math.max(p95 * 1.25, MIN_CEILING, 1);
 
   const isDark = document.documentElement.dataset.theme === 'dark';
   const gridColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)';
@@ -1027,7 +1059,7 @@ function renderTrafficChart() {
     ctx.moveTo(padL, padT + chartH);
     for (let i = 0; i < len; i++) {
       const x = padL + (i / (len - 1)) * chartW;
-      const y = padT + chartH - (data[i] / maxVal) * chartH;
+      const y = padT + chartH - (Math.min(data[i], maxVal) / maxVal) * chartH;
       ctx.lineTo(x, y);
     }
     ctx.lineTo(padL + chartW, padT + chartH);
@@ -1044,7 +1076,7 @@ function renderTrafficChart() {
     ctx.beginPath();
     for (let i = 0; i < len; i++) {
       const x = padL + (i / (len - 1)) * chartW;
-      const y = padT + chartH - (data[i] / maxVal) * chartH;
+      const y = padT + chartH - (Math.min(data[i], maxVal) / maxVal) * chartH;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -1055,7 +1087,7 @@ function renderTrafficChart() {
     // Glow dot on latest point
     if (len > 0) {
       const lastX = padL + chartW;
-      const lastY = padT + chartH - (data[len - 1] / maxVal) * chartH;
+      const lastY = padT + chartH - (Math.min(data[len - 1], maxVal) / maxVal) * chartH;
       ctx.beginPath();
       ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
       ctx.fillStyle = strokeColor;
@@ -1490,7 +1522,10 @@ function renderTicker(events) {
 function startRotation() {
   renderCurrentRotation();
   rotationTimer = setInterval(() => {
-    rotationIndex = (rotationIndex + 1) % ROTATION_VIEWS.length;
+    const views = visibleRotationViews();
+    const cur = views.indexOf(ROTATION_VIEWS[rotationIndex]);
+    const next = views[(cur + 1) % views.length];
+    rotationIndex = ROTATION_VIEWS.indexOf(next);
     renderCurrentRotation();
   }, ROTATION_INTERVAL);
   animateProgress();
@@ -1509,7 +1544,27 @@ function animateProgress() {
   setTimeout(animateProgress, ROTATION_INTERVAL);
 }
 
+// A view with nothing to show used to hold the panel for 15s displaying
+// "No recent events". Skip those, and fall back to the full list if every
+// view is empty so the panel never goes blank entirely.
+function viewHasContent(view) {
+  switch (view) {
+    case 'clients': return allClients.length > 0;
+    case 'aps':     return allDevices.some(d => d.type === 'ap');
+    case 'events':  return allEvents.length > 0;
+    default:        return true;
+  }
+}
+function visibleRotationViews() {
+  const v = ROTATION_VIEWS.filter(viewHasContent);
+  return v.length ? v : ROTATION_VIEWS;
+}
+
 function renderCurrentRotation() {
+  const views = visibleRotationViews();
+  if (!views.includes(ROTATION_VIEWS[rotationIndex])) {
+    rotationIndex = ROTATION_VIEWS.indexOf(views[0]);
+  }
   const viewName = ROTATION_VIEWS[rotationIndex];
   const el = document.getElementById('rotating-content');
   const label = document.getElementById('rotating-label');
@@ -1517,7 +1572,8 @@ function renderCurrentRotation() {
   const labels = { clients: 'Top Clients', aps: 'Access Points', events: 'Recent Events', traffic: 'Traffic Summary', stats: 'Network Stats' };
   const dots = { clients: 'var(--accent)', aps: 'var(--green)', events: 'var(--amber)', traffic: 'var(--cyan)', stats: 'var(--purple)' };
   label.innerHTML = `<div class="panel-header-dot" style="background:${dots[viewName] || 'var(--purple)'}"></div> ${labels[viewName] || viewName}`;
-  counter.textContent = `${rotationIndex + 1}/${ROTATION_VIEWS.length}`;
+  const pos = views.indexOf(viewName);
+  counter.textContent = `${(pos >= 0 ? pos : 0) + 1}/${views.length}`;
 
   let html = '<div class="rotating-view">';
   switch (viewName) {

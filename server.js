@@ -51,6 +51,7 @@ let sessionData = {
   baseUrl: null,
   controllerId: null,
   siteId: null,
+  loginTime: null,
 };
 
 // Traffic history buffer (60 points = 30 min at 30s intervals)
@@ -144,10 +145,15 @@ async function pollTraffic() {
 
 // Health check
 app.get('/api/health', (req, res) => {
+  // host and loginTime let a reloaded page rejoin the session the server
+  // already holds, instead of bouncing the user back to the login form.
   res.json({
     status: 'ok',
     uptime: process.uptime(),
     authenticated: !!sessionData.token,
+    host: sessionData.baseUrl ? sessionData.baseUrl.replace(/^https?:\/\//, '') : null,
+    siteId: sessionData.siteId || null,
+    loginTime: sessionData.loginTime || null,
   });
 });
 
@@ -181,7 +187,7 @@ app.post('/api/login', async (req, res) => {
     const rawCookies = loginResp.headers['set-cookie'];
     const cookieStr = rawCookies ? rawCookies.map(c => c.split(';')[0]).join('; ') : '';
 
-    sessionData = { token, cookies: cookieStr, baseUrl, controllerId };
+    sessionData = { token, cookies: cookieStr, baseUrl, controllerId, loginTime: Date.now() };
 
     const sitesResp = await axios.get(
       `${baseUrl}/${controllerId}/api/v2/sites?currentPage=1&currentPageSize=10`,
